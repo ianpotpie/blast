@@ -1,0 +1,40 @@
+DEHTSQ
+3
+3
+36
+Sequence 0 Position 0 Q-index 0
+Sequence 0 Position 0 Q-index 1
+Sequence 0 Position 1 Q-index 0
+Sequence 0 Position 1 Q-index 1
+Sequence 0 Position 2 Q-index 0
+Sequence 0 Position 2 Q-index 1
+Sequence 0 Position 3 Q-index 0
+Sequence 0 Position 3 Q-index 1
+Sequence 0 Position 4 Q-index 0
+Sequence 0 Position 4 Q-index 1
+Sequence 0 Position 5 Q-index 0
+Sequence 0 Position 5 Q-index 1
+Sequence 0 Position 6 Q-index 0
+Sequence 0 Position 6 Q-index 1
+Sequence 0 Position 7 Q-index 0
+Sequence 0 Position 7 Q-index 1
+Sequence 0 Position 8 Q-index 0
+Sequence 0 Position 8 Q-index 1
+Sequence 0 Position 9 Q-index 0
+Sequence 0 Position 9 Q-index 1
+Sequence 0 Position 10 Q-index 0
+Sequence 0 Position 10 Q-index 1
+Sequence 0 Position 11 Q-index 0
+Sequence 0 Position 11 Q-index 1
+Sequence 1 Position 0 Q-index 0
+Sequence 1 Position 1 Q-index 0
+Sequence 1 Position 2 Q-index 0
+Sequence 1 Position 3 Q-index 0
+Sequence 1 Position 4 Q-index 0
+Sequence 1 Position 5 Q-index 0
+Sequence 1 Position 6 Q-index 0
+Sequence 1 Position 7 Q-index 0
+Sequence 1 Position 8 Q-index 0
+Sequence 1 Position 9 Q-index 0
+Sequence 1 Position 10 Q-index 0
+Sequence 1 Position 11 Q-index 0

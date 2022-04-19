@@ -1,0 +1,25 @@
+ISTRAILSRIN
+4
+2
+21
+Sequence 1 Position 0 Q-index 5
+Sequence 2 Position 0 Q-index 3
+Sequence 3 Position 0 Q-index 4
+Sequence 3 Position 0 Q-index 5
+Sequence 3 Position 1 Q-index 4
+Sequence 3 Position 1 Q-index 5
+Sequence 3 Position 1 Q-index 6
+Sequence 3 Position 2 Q-index 6
+Sequence 4 Position 0 Q-index 3
+Sequence 4 Position 1 Q-index 4
+Sequence 4 Position 2 Q-index 5
+Sequence 5 Position 0 Q-index 3
+Sequence 5 Position 1 Q-index 4
+Sequence 5 Position 1 Q-index 5
+Sequence 5 Position 2 Q-index 4
+Sequence 5 Position 2 Q-index 5
+Sequence 5 Position 2 Q-index 6
+Sequence 5 Position 3 Q-index 6
+Sequence 5 Position 4 Q-index 0
+Sequence 5 Position 4 Q-index 4
+Sequence 5 Position 4 Q-index 5

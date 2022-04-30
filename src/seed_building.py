@@ -75,8 +75,6 @@ def main():
     parser.add_argument("seq", type=str)
     parser.add_argument("k", type=int)
     parser.add_argument("--threshold", "-t", type=float)
-    parser.add_argument("--gap-open", "-o", type=float, default=0)
-    parser.add_argument("--gap", "-g", type=float, default=-1)
     parser.add_argument("--match", "-m", type=float, default=1)
     parser.add_argument("--mismatch", "-c", type=float, default=-1)
     parser.add_argument("--matrix", "-s", type=str)
@@ -85,7 +83,7 @@ def main():
     if args.threshold is None:
         seeds = get_kmers(args.seq, args.k)
     else:
-        scoring_scheme = ScoringScheme(args.match, args.mismatch, args.gap, args.gap_open)
+        scoring_scheme = ScoringScheme(args.match, args.mismatch)
         if args.matrix:
             scoring_scheme.load_matrix(args.matrix)
         seeds = get_seeds(args.seq, args.k, scoring_scheme, args.threshold)

@@ -2,7 +2,7 @@ import sys
 from scoring_scheme import ScoringScheme
 
 
-def extend_seed(sequence, query, sequence_index, query_index, k, scoring_scheme, falloff_limit):
+def extend_seed(sequence, query, sequence_index, query_index, k, scoring_scheme, X):
     """
     Takes in the position of a seed of size k and returns the largest viable extension based on a scoring scheme and the
     falloff limit for the random walk score. The extension is provided in the form of its positions in both the
@@ -14,7 +14,7 @@ def extend_seed(sequence, query, sequence_index, query_index, k, scoring_scheme,
     :param query_index: the index of the seed in the query
     :param k: the size of the seed match
     :param scoring_scheme: a function for scoring symbols
-    :param falloff_limit: the limit for the score falloff when performing the extension
+    :param X: the limit for the score falloff when performing the extension
     :return: the left and right bounds of the extension of the seed
     """
 
@@ -27,7 +27,7 @@ def extend_seed(sequence, query, sequence_index, query_index, k, scoring_scheme,
     right_bound = k
     max_index = min(len(sequence) - sequence_index, len(query) - query_index)
     for index in range(k, max_index):
-        if max_score - score > falloff_limit:
+        if max_score - score > X:
             break
         next_sequence_symbol = sequence[sequence_index + index]
         next_query_symbol = query[query_index + index]
@@ -41,7 +41,7 @@ def extend_seed(sequence, query, sequence_index, query_index, k, scoring_scheme,
     left_bound = 0
     max_index = min(sequence_index, query_index)
     for index in range(1, max_index + 1):
-        if max_score - score > falloff_limit:
+        if max_score - score > X:
             break
         next_sequence_symbol = sequence[sequence_index - index]
         next_query_symbol = query[query_index - index]
@@ -56,7 +56,7 @@ def extend_seed(sequence, query, sequence_index, query_index, k, scoring_scheme,
     return sequence_index, query_index, extension_size
 
 
-def get_high_scoring_pairs(database, query, scoring_scheme, k, seeds, falloff_limit, cutoff_limit):
+def get_high_scoring_pairs(database, query, scoring_scheme, k, seeds, X, S):
     """
     This takes in a database, a query sequence, and the locations of seeds found between the two. It extends the seeds
     and finds any high-scoring alignment pairs between the database and the query sequences.
@@ -66,8 +66,8 @@ def get_high_scoring_pairs(database, query, scoring_scheme, k, seeds, falloff_li
     :param scoring_scheme: the function used to score matches of the query in the database
     :param k: the size of the seeds whose matches we are provided
     :param seeds: locations of regions similar to k-sized subsequences of our query
-    :param falloff_limit: the most the score of an extension can fall before termination
-    :param cutoff_limit: the minimum score of a successful extension
+    :param X: the most the score of an extension can fall before termination
+    :param S: the minimum score of a successful extension
     :return: a list of high-scoring alignment pairs
     """
 
@@ -76,14 +76,14 @@ def get_high_scoring_pairs(database, query, scoring_scheme, k, seeds, falloff_li
         database_index, sequence_index, query_index = seed
         sequence = database[database_index]
         sequence_index, query_index, extension_size = extend_seed(sequence, query, sequence_index, query_index,
-                                                                  k, scoring_scheme, falloff_limit)
+                                                                  k, scoring_scheme, X)
 
         sequence_alignment = sequence[sequence_index: sequence_index + extension_size]
         query_alignment = query[query_index: query_index + extension_size]
         alignment_score = scoring_scheme(sequence_alignment, query_alignment)
 
         # the formatting of each tuple is necessary for sorting
-        if alignment_score > cutoff_limit:
+        if alignment_score > S:
             high_scoring_pairs.add((alignment_score,
                                     len(query_alignment),
                                     -database_index,
@@ -113,39 +113,44 @@ def get_high_scoring_pairs(database, query, scoring_scheme, k, seeds, falloff_li
 
 
 def main():
-    db_file = sys.argv[1]
-    with open(db_file) as f:
+    # the database file should contain sequences seperated by "\n"
+    database_file = sys.argv[1]
+    with open(database_file) as f:
         database = [line.strip() for line in f.readlines()]
 
+    # the scoring matrix file
     matrix_file = sys.argv[2]
     scoring_scheme = ScoringScheme()
     scoring_scheme.load_matrix(matrix_file)
 
+    # the seeds file contains location of potential alignments
     seeds = []
     seeds_file = sys.argv[3]
     with open(seeds_file) as f:
         query = f.readline().strip()
         k = int(f.readline())
         T = float(f.readline())
-        n_seeds = int(f.readline())
+        n_seeds = int(f.readline())  # we don't need the line with the number of seeds
         for line in f.readlines():
             line = line.split()
             seed = (int(line[1]), int(line[3]), int(line[5]))
             seeds.append(seed)
 
-    falloff_limit = float(sys.argv[4])
+    # the falloff limit for ceasing extension
+    X = float(sys.argv[4])
 
-    cutoff_limit = float(sys.argv[5])
+    # the cutoff limit for retaining an extension
+    S = float(sys.argv[5])
 
-    high_scoring_pairs = get_high_scoring_pairs(database, query, scoring_scheme, k, seeds, falloff_limit, cutoff_limit)
+    high_scoring_pairs = get_high_scoring_pairs(database, query, scoring_scheme, k, seeds, X, S)
 
     print(query)
     print(k)
     print(int(T))
     print(len(high_scoring_pairs))
     print(35 * "-")
-    for i_seq, i_pos, i_query, query_alignment, seq_alignment, score in high_scoring_pairs:
-        print(f"Sequence {i_seq} Position {i_pos} Q-index {i_query}")
+    for nth_seq, seq_index, query_index, query_alignment, seq_alignment, score in high_scoring_pairs:
+        print(f"Sequence {nth_seq} Position {seq_index} Q-index {query_index}")
         print(query_alignment)
         print(seq_alignment)
         print(int(score))

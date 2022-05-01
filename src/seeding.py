@@ -1,7 +1,7 @@
 import sys
 import argparse
-import pylab as pl
-from matplotlib import collections as mc
+import matplotlib.pyplot as plt
+from matplotlib.collections import LineCollection
 from knuth_morris_pratt import kmp_search
 
 
@@ -53,12 +53,12 @@ def display_hits(hits, db_seq=None, query_seq=None):
     :param query_seq: the query sequence from which the hits were taken
     :return:
     """
-    fig, ax = pl.subplots()
+    fig, ax = plt.subplots()
     fig.suptitle("BLAST Seeding\n")
     ax.set_xlabel("Database Sequence")
     ax.set_ylabel("Query Sequence")
     alignments = [[(i, j), (i + k - 1, j + k - 1)] for i, j, k in hits]
-    lc = mc.LineCollection(alignments, linewidths=1, zorder=0)
+    lc = LineCollection(alignments, linewidths=1, zorder=0)
     ax.add_collection(lc)
     db_indices = [i for i, _, _ in hits]
     query_indices = [j for _, j, _ in hits]
@@ -73,7 +73,7 @@ def display_hits(hits, db_seq=None, query_seq=None):
     ax.invert_yaxis()
     ax.xaxis.tick_top()
     ax.xaxis.set_label_position("top")
-    pl.show()
+    plt.show()
 
 
 def main():

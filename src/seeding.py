@@ -1,7 +1,6 @@
 import sys
 import argparse
 import pylab as pl
-import matplotlib.pyplot as plt
 from matplotlib import collections as mc
 from knuth_morris_pratt import kmp_search
 
@@ -46,32 +45,56 @@ def extract_seeds(seed_file):
     return seeds
 
 
-# def display_hits(hits):
-#     """
-#
-#     :param hits:
-#     :return:
-#     """
-#     alignments = [[(i, j), (i + k, j + k)] for i, j, k in hits]
-#     lc = mc.LineCollection(alignments, linewidths=1)
-#     fig, ax = pl.subplots()
-#     pl.show()
+def display_hits(hits, db_seq=None, query_seq=None):
+    """
+
+    :param hits: a sequence of hits to be plotted (db_index, query_index, length)
+    :param db_seq: the database sequence from which the hits were taken
+    :param query_seq: the query sequence from which the hits were taken
+    :return:
+    """
+    fig, ax = pl.subplots()
+    fig.suptitle("BLAST Seeding\n")
+    ax.set_xlabel("Database Sequence")
+    ax.set_ylabel("Query Sequence")
+    alignments = [[(i, j), (i + k - 1, j + k - 1)] for i, j, k in hits]
+    lc = mc.LineCollection(alignments, linewidths=1, zorder=0)
+    ax.add_collection(lc)
+    db_indices = [i for i, _, _ in hits]
+    query_indices = [j for _, j, _ in hits]
+    ax.scatter(db_indices, query_indices, s=10, c="black", zorder=1)
+    if db_seq is not None:
+        ax.set_xticks([i for i in range(len(db_seq))])
+        ax.set_xticklabels([s for s in db_seq])
+    if query_seq is not None:
+        ax.set_yticks([j for j in range(len(query_seq))])
+        ax.set_yticklabels([s for s in query_seq])
+    ax.tick_params(labelsize=4)
+    ax.invert_yaxis()
+    ax.xaxis.tick_top()
+    ax.xaxis.set_label_position("top")
+    pl.show()
 
 
 def main():
     parser = argparse.ArgumentParser(description="Locate HSPs in a database sequence.")
     parser.add_argument("db_seq", type=str)
     parser.add_argument("seed_file", type=str)
+    parser.add_argument("--query-seq", type=str)
     args = parser.parse_args(sys.argv[1:])
 
     seeds = extract_seeds(args.seed_file)
     hits = find_hits(args.db_seq, seeds)
 
     print(f"# Database Sequence: {args.db_seq}")
+    if args.query_seq is not None:
+        print(f"# Query Sequence: {args.query_seq}")
     print(f"# Seeds: {seeds}")
     print(f"# Hits:")
     for db_index, query_index, k in hits:
         print(f"{db_index} {query_index} {k}")
+
+    display_hits(hits, args.db_seq, args.query_seq)
 
 
 if __name__ == "__main__":

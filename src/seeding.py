@@ -30,8 +30,44 @@ def find_hits(db_seq: str, seeds: list):
     return hits
 
 
+def find_hit_sequences(hits, A, n=2):
+    """
+    Finds all sequences of n non-overlapping hits that are at-most a distance of A from one another.
+    Returns all such sequences as a list of tuples.
+
+    :param hits: the original hits whose sequences we are finding
+    :param A: the distance threshold for tuples to be grouped together
+    :param n: the number of hits in each tuple.
+    :return: a list of tuples
+    """
+    hits_by_diagonal = {}
+    for i, j, k in hits:
+        diagonal = i - j
+        if diagonal not in hits_by_diagonal:
+            hits_by_diagonal[diagonal] = []
+        hits_by_diagonal[diagonal].append((i, j, k))
+
+    hit_tuples = []
+    for diagonal, aligned_hits in hits_by_diagonal.items():
+        for start, (start_i, start_j, start_k) in enumerate(hits):
+            hit_list = [(start_i, start_j, start_k)]
+            for index in range(start + 1, len(aligned_hits)):
+                prev_i, prev_j, prev_k = hit_list[-1]
+                curr_i, curr_j, curr_k = aligned_hits[index]
+                if prev_i + prev_k <= curr_i <= prev_i + A:
+                    hit_list.append((curr_i, curr_j, curr_k))
+                if len(hit_list) >= n:
+                    hit_tuples.append(tuple(hit_list))
+                    break
+
+    return hit_tuples
+
+
 def extract_seeds(seed_file):
     """
+    Takes a file containing a list of seeds and converts the data in the file to a list of seeds (index, kmer tuples).
+    In the file, lines containing comments will begin with the "#" symbol.
+    Each line will contain at most one seed, which will have the index and kmer of the seed separated by whitespace.
 
     :param seed_file:
     :return:
@@ -47,6 +83,7 @@ def extract_seeds(seed_file):
 
 def display_hits(hits, db_seq=None, query_seq=None):
     """
+    Displays a dot-plot of the hits resulting from an alignment using matplotlib.
 
     :param hits: a sequence of hits to be plotted (db_index, query_index, length)
     :param db_seq: the database sequence from which the hits were taken

@@ -5,7 +5,7 @@ from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 
 
-def filter_extensions_by_score(extensions, db_seq, query_seq, scoring_scheme, S1):
+def filter_extensions_by_score(extensions, db_seq, query_seq, scoring_scheme, S):
     """
     Filters out all extensions from a list of extensions based on their scores
 
@@ -13,12 +13,12 @@ def filter_extensions_by_score(extensions, db_seq, query_seq, scoring_scheme, S1
     :param db_seq: the database sequence form which the extensions were taken
     :param query_seq: the query sequence from which the extensions were taken
     :param scoring_scheme: the scoring scheme used to score the extensions
-    :param S1: the threshold score used to discriminate between extensions
+    :param S: the threshold score used to discriminate between extensions
     :return: the list of extensions that surpass the threshold score
     """
     filtered_extensions = []
     for i, j, k in extensions:
-        if scoring_scheme(db_seq[i:i + k], query_seq[j:j + k]) > S1:
+        if scoring_scheme(db_seq[i:i + k], query_seq[j:j + k]) > S:
             filtered_extensions.append((i, j, k))
     return filtered_extensions
 
@@ -152,7 +152,7 @@ def main():
     parser.add_argument("query_seq")
     parser.add_argument("hit_file")
     parser.add_argument("X")
-    parser.add_argument("S1")
+    parser.add_argument("S")
     parser.add_argument("--match", "-m", type=float, default=1)
     parser.add_argument("--mismatch", "-n", type=float, default=-1)
     parser.add_argument("--matrix", "-s", type=str)
@@ -173,7 +173,7 @@ def main():
     print(f"# Query Sequence: {args.query_seq}")
     print(f"# Hits: {hits}")
     print(f"# Dropoff Threshold (X): {args.X}")
-    print(f"# Extension Threshold (S1): {args.S1}")
+    print(f"# Extension Threshold (S): {args.S}")
     print(f"# Extensions:")
     for i, j, k in extensions:
         print(f"{i} {j} {k}")

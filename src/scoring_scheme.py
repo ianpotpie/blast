@@ -2,10 +2,10 @@ import numpy as np
 
 
 class ScoringScheme:
-    def __init__(self, match=1.0, mismatch=-1.0, gap=-1.0, gap_open=0.0, semi_global=False):
+    def __init__(self, match=1.0, mismatch=-1.0, gap_extend=-1.0, gap_open=0.0, semi_global=False):
         self.match = match
         self.mismatch = mismatch
-        self.gap = gap
+        self.gap_extend = gap_extend
         self.gap_open = gap_open
         self.semi_global = semi_global
         self.symbol_to_index = None
@@ -51,11 +51,11 @@ class ScoringScheme:
                 raise ValueError("Encountered alignment between two gaps")
 
             elif symbol1 == "-":
-                score += self.gap
+                score += self.gap_extend
                 score += self.gap_open if (i > 0) and alignment1[i - 1] != "-" else 0.0
 
             elif symbol2 == "-":
-                score += self.gap
+                score += self.gap_extend
                 score += self.gap_open if (i > 0) and alignment2[i - 1] != "-" else 0.0
 
             elif self.scoring_matrix is not None:
@@ -113,11 +113,11 @@ class ScoringScheme:
         if self.scoring_matrix is None:
             s = f"Match Score: {self.match}\n" + \
                 f"Mismatch Penalty: {self.mismatch}\n" + \
-                f"Gap Start Penalty: {self.gap_open}\n" + \
-                f"Gap Extension Penalty: {self.gap}"
+                f"Gap Open Penalty: {self.gap_open}\n" + \
+                f"Gap Extension Penalty: {self.gap_extend}"
         else:
-            s = f"# Gap Start Penalty: {self.gap_open}\n" + \
-                f"# Gap Extension Penalty: {self.gap}\n"
+            s = f"# Gap Open Penalty: {self.gap_open}\n" + \
+                f"# Gap Extension Penalty: {self.gap_extend}\n"
 
             symbols = self.get_symbols()
             s += "   " + "  ".join(symbols)

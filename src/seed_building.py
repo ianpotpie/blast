@@ -44,7 +44,7 @@ def get_neighborhood(seq, scoring_scheme, T):
     return [seq for seq, score in prefixes]
 
 
-def get_seeds(seq: str, k: int, scoring_scheme: ScoringScheme, T: float):
+def get_seeds(seq, k, scoring_scheme, T):
     """
     Gets all the k-mers that have a high-scoring subsequence within the sequence and returns them as a list of
     (index, kmer) tuples.

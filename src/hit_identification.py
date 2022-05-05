@@ -91,7 +91,7 @@ def display_hits(hits, db_seq=None, query_seq=None):
     :return:
     """
     fig, ax = plt.subplots()
-    fig.suptitle("BLAST Seeding\n")
+    fig.suptitle("BLAST Hit Identification\n")
     ax.set_xlabel("Database Sequence")
     ax.set_ylabel("Query Sequence")
     alignments = [[(i, j), (i + k - 1, j + k - 1)] for i, j, k in hits]
@@ -114,24 +114,28 @@ def display_hits(hits, db_seq=None, query_seq=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Locate HSPs in a database sequence.")
-    parser.add_argument("db_seq", type=str)
+    parser_description = "Given a database sequence and a file containing a list of seeds, this script finds all " \
+                         "instances of each seed in the database sequence and returns them as a list of \'hits\'. If " \
+                         "the display flag is present, then a plot of the alignment will be shown. The original query" \
+                         "sequence can be provided as well to improve the plot."
+    parser = argparse.ArgumentParser(description=parser_description)
+    parser.add_argument("database_sequence", type=str)
     parser.add_argument("seed_file", type=str)
-    parser.add_argument("--query-seq", type=str)
+    parser.add_argument("--query-sequence", "-q", type=str)
+    parser.add_argument("--display", "-d", type=bool, action="store_true")
     args = parser.parse_args(sys.argv[1:])
-
     seeds = extract_seeds(args.seed_file)
-    hits = find_hits(args.db_seq, seeds)
+    hits = find_hits(args.database_sequence, seeds)
 
-    print(f"# Database Sequence: {args.db_seq}")
-    if args.query_seq is not None:
-        print(f"# Query Sequence: {args.query_seq}")
+    print(f"# Database Sequence: {args.database_sequence}")
+    if args.query_sequence is not None:
+        print(f"# Query Sequence: {args.query_sequence}")
     print(f"# Seeds: {seeds}")
     print(f"# Hits:")
     for db_index, query_index, k in hits:
         print(f"{db_index} {query_index} {k}")
 
-    display_hits(hits, args.db_seq, args.query_seq)
+    display_hits(hits, args.database_sequence, args.query_sequence)
 
 
 if __name__ == "__main__":

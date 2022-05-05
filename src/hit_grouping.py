@@ -40,7 +40,8 @@ def group_hits(hits, A, N):
 
 
 def main():
-    parser = argparse.ArgumentParser()
+    parser_description = "Finds all groups of N non-overlapping hits whose pairwise distances are less than A."
+    parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument("hits_file", type=str)
     parser.add_argument("A", type=int)
     parser.add_argument("--group-size", "-n", type=int, default=2)

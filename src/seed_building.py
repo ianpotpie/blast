@@ -4,7 +4,7 @@ import argparse
 import sys
 
 
-def get_kmers(seq: str, k: int):
+def get_kmers(seq, k):
     """
     Retrieves all k-mers from a query sequence and returns them as a list of (index, kmer) tuples.
 
@@ -19,9 +19,10 @@ def get_kmers(seq: str, k: int):
     return seeds
 
 
-def get_neighborhood(seq: str, scoring_scheme: ScoringScheme, T: float):
+def get_neighborhood(seq, scoring_scheme, T):
     """
-    Gets all the kmers that have a match score of more than T with the sequence.
+    Gets all the kmers that have a match score of more than T with the sequence. I call this the "prefix pruning"
+    algorithm, since it builds up kmers from common prefixes whilst discarding inviable candidates.
 
     :param seq: the sequence whose neighborhood we are finding
     :param scoring_scheme: the scoring scheme use for sequence comparisons
@@ -71,19 +72,25 @@ def get_seeds(seq: str, k: int, scoring_scheme: ScoringScheme, T: float):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Find the seeds of a sequence.")
+    parser_description = "Provided a source sequence and an integer k, this script finds all subsequences of the " \
+                         "source sequence with length k. If a threshold score 'T' is provided, then it will find all " \
+                         "kmers with gapless alignments scoring over T against some subsequence in the source " \
+                         "sequence. The script prints a list of all such kmers and their positions in the source " \
+                         "sequence. The user may provide their own scoring criteria by setting the match/mismatch " \
+                         "scores or loading a scoring matrix file."
+    parser = argparse.ArgumentParser(description=parser_description)
     parser.add_argument("seq", type=str)
     parser.add_argument("k", type=int)
     parser.add_argument("--threshold", "-t", type=float)
     parser.add_argument("--match", "-m", type=float, default=1)
-    parser.add_argument("--mismatch", "-c", type=float, default=-1)
+    parser.add_argument("--mismatch", "-e", type=float, default=-1)
     parser.add_argument("--matrix", "-s", type=str)
     args = parser.parse_args(sys.argv[1:])
 
     if args.threshold is None:
         seeds = get_kmers(args.seq, args.k)
     else:
-        scoring_scheme = ScoringScheme(args.match, args.mismatch)
+        scoring_scheme = ScoringScheme(match=args.match, mismatch=args.mismatch)
         if args.matrix:
             scoring_scheme.load_matrix(args.matrix)
         seeds = get_seeds(args.seq, args.k, scoring_scheme, args.threshold)
@@ -92,7 +99,7 @@ def main():
     print(f"# Length (k): {args.k}")
     if args.threshold is not None:
         print(f"# Threshold (T): {args.threshold}")
-    print(f"# Seeds:")
+    print(f"# {len(seeds)} Seeds:")
     for index, kmer in seeds:
         print(f"{index} {kmer}")
 

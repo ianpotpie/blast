@@ -1,5 +1,4 @@
 from scoring_scheme import ScoringScheme
-from itertools import product
 import argparse
 import sys
 
@@ -72,13 +71,12 @@ def get_seeds(seq, k, scoring_scheme, T):
 
 
 def main():
-    parser_description = "Provided a source sequence and an integer k, this script finds all subsequences of the " \
-                         "source sequence with length k. If a threshold score 'T' is provided, then it will find all " \
-                         "kmers with gapless alignments scoring over T against some subsequence in the source " \
-                         "sequence. The script prints a list of all such kmers and their positions in the source " \
-                         "sequence. The user may provide their own scoring criteria by setting the match/mismatch " \
-                         "scores or loading a scoring matrix file."
-    parser = argparse.ArgumentParser(description=parser_description)
+    description = "Provided a source sequence and an integer k, this script finds all subsequences of the source " \
+                  "sequence with length k. If a threshold score 'T' is provided, then it will find all kmers with " \
+                  "gapless alignments scoring over T against some subsequence in the source sequence. The script " \
+                  "prints a list of all such kmers and their positions in the source sequence. The user may provide " \
+                  "their own scoring criteria by setting the match/mismatch scores or loading a scoring matrix file."
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument("seq", type=str)
     parser.add_argument("k", type=int)
     parser.add_argument("--threshold", "-t", type=float)

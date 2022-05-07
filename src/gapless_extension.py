@@ -129,7 +129,7 @@ def main():
     parser.add_argument("--matrix", "-s", type=str)
     args = parser.parse_args(sys.argv[1:])
 
-    hits = extract_hits(args.hit_file)
+    hits = extract_hits(args.hits_file)
 
     scoring_scheme = ScoringScheme(match=args.match, mismatch=args.mismatch)
     if args.matrix is not None:

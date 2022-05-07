@@ -23,16 +23,19 @@ def group_hits(hits, A, N):
     hit_groups = []
     for aligned_hits in hits_by_diagonal.values():
         aligned_hits = sorted(aligned_hits)
-        index = 0
-        while index <= len(aligned_hits) - N:
-            hit_group = [aligned_hits[index]]
-            next_index, valid_group = index + 1, True
-            for ith_hit, hit in enumerate(aligned_hits[index + 1:index + N]):
-                prev_i, prev_j, prev_k = hit_group[-1]
-                curr_i, curr_j, curr_k = hit
+        start = 0
+        while start <= len(aligned_hits) - N:
+            hit_group = [aligned_hits[start]]
+            valid_group = True
+            for curr in range(start + 1, start + N):
+                prev_i, prev_j, prev_k = aligned_hits[curr - 1]
+                curr_i, curr_j, curr_k = aligned_hits[curr]
                 if curr_i - prev_i > A:
-                    valid_group = index + ith_hit + 1, False
+                    valid_group = False
+                    start = curr
                     break
+                else:
+                    hit_group.append((curr_i, curr_j, curr_k))
             if valid_group:
                 hit_groups.append(hit_group)
 
@@ -40,11 +43,12 @@ def group_hits(hits, A, N):
 
 
 def main():
-    parser_description = "Finds all groups of N non-overlapping hits whose pairwise distances are less than A."
-    parser = argparse.ArgumentParser(description=parser_description)
+    description = "Finds all groups of N non-overlapping hits whose pairwise distances are less than A." \
+                  "If an N is not provided then the default value is 2 (it looks for pairs)"
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument("hits_file", type=str)
     parser.add_argument("A", type=int)
-    parser.add_argument("--group-size", "-n", type=int, default=2)
+    parser.add_argument("N", type=int, default=2)
     args = parser.parse_args(sys.argv[1:])
 
     hits = []
@@ -54,13 +58,14 @@ def main():
                 i, j, k = line.split()
                 hits.append((int(i), int(j), int(k)))
 
-    hit_groups = group_hits(hits, args.A, args.group_size)
+    hit_groups = group_hits(hits, args.A, args.N)
 
     print(f"# Distance Limit (A): {args.A}")
-    print(f"# Group Size (N): {args.group_size}")
+    print(f"# Group Size (N): {args.N}")
     print(f"# {len(hit_groups)} Hit Groups:")
     for hit_group in hit_groups:
-        print(" ".join(hit_group) + "\n")
+        hit_group = [" ".join(hit) for hit in hit_group]
+        print(",".join(hit_group))
 
 
 if __name__ == "__main__":

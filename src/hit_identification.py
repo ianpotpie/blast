@@ -65,8 +65,8 @@ def display_hits(hits, db_seq=None, q_seq=None):
     lc = LineCollection(alignments, linewidths=1, zorder=0)
     ax.add_collection(lc)
     db_indices = [i for i, _, _ in hits]
-    query_indices = [j for _, j, _ in hits]
-    ax.scatter(db_indices, query_indices, s=10, c="black", zorder=1)
+    q_indices = [j for _, j, _ in hits]
+    ax.scatter(db_indices, q_indices, s=10, c="black", zorder=1)
     if db_seq is not None:
         ax.set_xticks([i for i in range(len(db_seq))])
         ax.set_xticklabels([s for s in db_seq])

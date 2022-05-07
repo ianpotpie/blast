@@ -5,25 +5,25 @@ from matplotlib.collections import LineCollection
 import matplotlib.pyplot as plt
 
 
-def filter_extensions_by_score(extensions, db_seq, query_seq, scoring_scheme, S):
+def filter_extensions_by_score(extensions, db_seq, q_seq, scoring_scheme, S):
     """
     Filters out all extensions from a list of extensions based on their scores
 
     :param extensions: a list of extensions
     :param db_seq: the database sequence form which the extensions were taken
-    :param query_seq: the query sequence from which the extensions were taken
+    :param q_seq: the query sequence from which the extensions were taken
     :param scoring_scheme: the scoring scheme used to score the extensions
     :param S: the threshold score used to discriminate between extensions
     :return: the list of extensions that surpass the threshold score
     """
     filtered_extensions = []
     for i, j, k in extensions:
-        if scoring_scheme(db_seq[i:i + k], query_seq[j:j + k]) > S:
+        if scoring_scheme(db_seq[i:i + k], q_seq[j:j + k]) > S:
             filtered_extensions.append((i, j, k))
     return filtered_extensions
 
 
-def gapless_extension(db_seq, db_start, query_seq, query_start, k, scoring_scheme, X):
+def gapless_extension(db_seq, db_start, q_seq, q_start, k, scoring_scheme, X):
     """
     Takes in the position of a seed of size k and returns the largest viable extension based on a scoring scheme and the
     falloff limit for the random walk score. The extension is provided in the form of its positions in both the
@@ -31,76 +31,47 @@ def gapless_extension(db_seq, db_start, query_seq, query_start, k, scoring_schem
 
     :param db_seq: the sequence in which the seed was matched
     :param db_start: the index of the seed location in the database sequence
-    :param query_seq: the query from which the seed was derived
-    :param query_start: the index of the seed location in the query sequence
+    :param q_seq: the query from which the seed was derived
+    :param q_start: the index of the seed location in the query sequence
     :param k: the length of the seed
     :param scoring_scheme: a function for scoring symbols
     :param X: the limit for the score falloff when performing the extension
     :return: the left and right bounds of the extension of the seed
     """
     db_kmer = db_seq[db_start: db_start + k]
-    query_kmer = query_seq[query_start: query_start + k]
-    seed_score = scoring_scheme(db_kmer, query_kmer)
+    q_kmer = q_seq[q_start: q_start + k]
+    seed_score = scoring_scheme(db_kmer, q_kmer)
 
     # extend the query/database sequence to the right
     max_score = cur_score = seed_score
-    for i, (db_symbol, query_symbol) in enumerate(zip(db_seq[db_start + k:], query_seq[query_start + k:])):
+    for i, (db_symbol, q_symbol) in enumerate(zip(db_seq[db_start + k:], q_seq[q_start + k:])):
         if max_score - cur_score > X:
             break
-        cur_score += scoring_scheme(db_symbol, query_symbol)
+        cur_score += scoring_scheme(db_symbol, q_symbol)
         if cur_score >= max_score:
             max_score = cur_score
             k = k + (i + 1)
 
     # extend the query/database sequence to the left
     max_score = cur_score = seed_score
-    for i, (db_symbol, query_symbol) in enumerate(zip(db_seq[db_start - 1::-1], query_seq[db_start - 1::-1])):
+    for i, (db_symbol, q_symbol) in enumerate(zip(db_seq[db_start - 1::-1], q_seq[q_start - 1::-1])):
         if max_score - cur_score > X:
             break
-        cur_score += scoring_scheme(db_symbol, query_symbol)
+        cur_score += scoring_scheme(db_symbol, q_symbol)
         if cur_score >= max_score:
             max_score = cur_score
-            db_start, query_start, k = db_start - (i + 1), query_start - (i + 1), k + (i + 1)
+            db_start, query_start, k = db_start - (i + 1), q_start - (i + 1), k + (i + 1)
 
-    return db_start, query_start, k
-
-
-# This is not really used in any papers that I found.
-# def join_hits(hits, A):
-#     """
-#     Combines all hits within a distance of A from one another.
-#
-#     :param hits: a list of seed-hit tuples (db_index, query_index, length)
-#     :param A: a distance threshold for merging hits
-#     :return: a new dictionary of hits to their
-#     """
-#     hits_by_diagonal = {}
-#     for db_index, query_index, k in hits:
-#         diagonal = db_index - query_index  # this defines the diagonal
-#         if diagonal not in hits_by_diagonal:
-#             hits_by_diagonal[diagonal] = []
-#         hits_by_diagonal[diagonal].append((db_index, query_index, k))
-#
-#     joined_hits = []
-#     for aligned_hits in hits_by_diagonal.values():
-#         prev_i, prev_j = float("-inf"), float("-inf")
-#         for i, j, k in sorted(aligned_hits):
-#             if i - prev_i > A:
-#                 joined_hits.append((i, j, k))
-#             else:
-#                 start_i, start_j, combined_k = joined_hits[-1]
-#                 joined_hits[-1] = (start_i, start_j, max(combined_k, (i + k) - start_i))
-#             prev_i, prev_j = i, j
-#
-#     return joined_hits
+    return db_start, q_start, k
 
 
-def display_gapless_extensions(extensions, db_seq=None, query_seq=None, hits=None):
+def display_gapless_extensions(extensions, db_seq=None, q_seq=None, hits=None):
     """
+    Displays a list of extensions using matplotlib.
 
     :param extensions: a sequence of hits to be plotted (db_index, query_index, length)
     :param db_seq: the database sequence from which the hits were taken (optional)
-    :param query_seq: the query sequence from which the hits were taken (optional)
+    :param q_seq: the query sequence from which the hits were taken (optional)
     :param hits: the hits from which the extensions were created (optional)
     :return: None
     """
@@ -114,9 +85,9 @@ def display_gapless_extensions(extensions, db_seq=None, query_seq=None, hits=Non
     if db_seq is not None:
         ax.set_xticks([i for i in range(len(db_seq))])
         ax.set_xticklabels([s for s in db_seq])
-    if query_seq is not None:
-        ax.set_yticks([j for j in range(len(query_seq))])
-        ax.set_yticklabels([s for s in query_seq])
+    if q_seq is not None:
+        ax.set_yticks([j for j in range(len(q_seq))])
+        ax.set_yticklabels([s for s in q_seq])
     if hits is not None:
         db_indices = [i for i, j, k in extensions]
         query_indices = [j for i, j, k in extensions]
@@ -141,18 +112,18 @@ def extract_hits(hit_file):
     with open(hit_file) as f:
         for line in f:
             if line[0] != "#":
-                db_index, query_index, k = line.split()
-                hits.append((int(db_index), int(query_index), int(k)))
+                db_index, q_index, k = line.split()
+                hits.append((int(db_index), int(q_index), int(k)))
     return hits
 
 
 def main():
     parser = argparse.ArgumentParser("Combine and/or extend all hits.")
-    parser.add_argument("db_seq")
-    parser.add_argument("query_seq")
-    parser.add_argument("hit_file")
-    parser.add_argument("X")
-    parser.add_argument("S")
+    parser.add_argument("database_sequence", type=str)
+    parser.add_argument("query_sequence", type=str)
+    parser.add_argument("hits_file", type=str)
+    parser.add_argument("X", type=float)
+    parser.add_argument("S", type=float)
     parser.add_argument("--match", "-m", type=float, default=1)
     parser.add_argument("--mismatch", "-n", type=float, default=-1)
     parser.add_argument("--matrix", "-s", type=str)
@@ -166,19 +137,22 @@ def main():
 
     extensions = []
     for i, j, k in hits:
-        extension = gapless_extension(args.db_seq, i, args.query_seq, j, k, scoring_scheme, args.X)
+        extension = gapless_extension(args.database_sequence, i, args.query_sequence, j, k, scoring_scheme, args.X)
         extensions.append(extension)
 
-    print(f"# Database Sequence: {args.db_seq}")
-    print(f"# Query Sequence: {args.query_seq}")
+    extensions = filter_extensions_by_score(extensions, args.database_sequence, args.query_sequence,
+                                            scoring_scheme, args.S)
+
+    print(f"# Database Sequence: {args.database_sequence}")
+    print(f"# Query Sequence: {args.query_sequence}")
     print(f"# Hits: {hits}")
     print(f"# Dropoff Threshold (X): {args.X}")
     print(f"# Extension Threshold (S): {args.S}")
-    print(f"# Extensions:")
+    print(f"# {len(extensions)} Extensions:")
     for i, j, k in extensions:
         print(f"{i} {j} {k}")
 
-    display_gapless_extensions(extensions, args.db_seq, args.query_seq, hits)
+    display_gapless_extensions(extensions, args.database_sequence, args.query_sequence, hits)
 
 
 if __name__ == "__main__":

@@ -77,7 +77,7 @@ def main():
                   "prints a list of all such kmers and their positions in the source sequence. The user may provide " \
                   "their own scoring criteria by setting the match/mismatch scores or loading a scoring matrix file."
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("seq", type=str)
+    parser.add_argument("sequence", type=str)
     parser.add_argument("k", type=int)
     parser.add_argument("--threshold", "-t", type=float)
     parser.add_argument("--match", "-m", type=float, default=1)
@@ -86,14 +86,14 @@ def main():
     args = parser.parse_args(sys.argv[1:])
 
     if args.threshold is None:
-        seeds = get_kmers(args.seq, args.k)
+        seeds = get_kmers(args.sequence, args.k)
     else:
         scoring_scheme = ScoringScheme(match=args.match, mismatch=args.mismatch)
         if args.matrix:
             scoring_scheme.load_matrix(args.matrix)
         seeds = get_seeds(args.seq, args.k, scoring_scheme, args.threshold)
 
-    print(f"# Sequence: {args.seq}")
+    print(f"# Sequence: {args.sequence}")
     print(f"# Length (k): {args.k}")
     if args.threshold is not None:
         print(f"# Threshold (T): {args.threshold}")

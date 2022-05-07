@@ -14,11 +14,11 @@ def group_hits(hits, A, N):
     :return: a new dictionary of hits to their
     """
     hits_by_diagonal = {}
-    for db_index, query_index, k in hits:
-        diagonal = db_index - query_index  # this defines the diagonal
+    for db_index, q_index, k in hits:
+        diagonal = db_index - q_index  # this defines the diagonal
         if diagonal not in hits_by_diagonal:
             hits_by_diagonal[diagonal] = []
-        hits_by_diagonal[diagonal].append((db_index, query_index, k))
+        hits_by_diagonal[diagonal].append((db_index, q_index, k))
 
     hit_groups = []
     for aligned_hits in hits_by_diagonal.values():
@@ -50,7 +50,7 @@ def extract_hits(hits_file):
     :return: a list of hits tuples (i, j, k)
     """
     hits = []
-    with open(hits_file, mode="w") as f:
+    with open(hits_file, mode="r") as f:
         for line in f:
             if line[0] != "#":
                 i, j, k = line.split()

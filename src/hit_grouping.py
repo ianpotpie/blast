@@ -42,6 +42,23 @@ def group_hits(hits, A, N):
     return hit_groups
 
 
+def extract_hits(hits_file):
+    """
+    Extracts hits from a file and returns them as a list.
+
+    :param hits_file: a file containing the hits
+    :return: a list of hits tuples (i, j, k)
+    """
+    hits = []
+    with open(hits_file, mode="w") as f:
+        for line in f:
+            if line[0] != "#":
+                i, j, k = line.split()
+                hits.append((int(i), int(j), int(k)))
+
+    return hits
+
+
 def main():
     description = "Finds all groups of N non-overlapping hits whose pairwise distances are less than A." \
                   "If an N is not provided then the default value is 2 (it looks for pairs)"
@@ -51,12 +68,7 @@ def main():
     parser.add_argument("N", type=int, default=2)
     args = parser.parse_args(sys.argv[1:])
 
-    hits = []
-    with open(args.hits_file, mode="w") as f:
-        for line in f:
-            if line[0] != "#":
-                i, j, k = line.split()
-                hits.append((int(i), int(j), int(k)))
+    hits = extract_hits(args.hits_file)
 
     hit_groups = group_hits(hits, args.A, args.N)
 

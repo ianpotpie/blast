@@ -81,7 +81,7 @@ def main():
 
     print(f"# Database Sequence: {db_seq}")
     print(f"# Seeds: {seeds}")
-    print(f"# Hits:")
+    print(f"# {len(hits)} Hits:")
     for db_index, q_index, k in hits:
         print(f"{db_index} {q_index} {k}")
 

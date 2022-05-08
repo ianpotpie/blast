@@ -65,8 +65,8 @@ def display_hit_groups(hit_groups, original_hits=None):
 
     grouped_hits = set()
     for group in hit_groups:
-        for i, j, k in group:
-            grouped_hits.add((i, j))  # using a set is faster that displaying overlapping hits
+        for hit in group:
+            grouped_hits.add(hit)  # using a set is faster that displaying overlapping hits
     db_indices = []
     q_indices = []
     for i, j, k in grouped_hits:
@@ -108,7 +108,7 @@ def main():
     print(f"# Group Size (N): {args.N}")
     print(f"# {len(hit_groups)} Hit Groups:")
     for hit_group in hit_groups:
-        hit_group = [f"{i} {j} {k}" for i, j, k in hit_group]
+        hit_group = [f"{i} {j} {k} " for i, j, k in hit_group]
         print(",".join(hit_group))
 
     if args.display:

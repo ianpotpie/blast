@@ -63,10 +63,16 @@ def display_hit_groups(hit_groups, original_hits=None):
         q_indices = [j for _, j, _ in original_hits]
         ax.scatter(db_indices, q_indices, s=1, c="b")
 
+    grouped_hits = set()
     for group in hit_groups:
-        db_indices = [i for i, _, _ in group]
-        q_indices = [j for _, j, _ in group]
-        ax.scatter(db_indices, q_indices, s=1, c="r")
+        for i, j, k in group:
+            grouped_hits.add((i, j))  # using a set is faster that displaying overlapping hits
+    db_indices = []
+    q_indices = []
+    for i, j, k in grouped_hits:
+        db_indices.append(i)
+        q_indices.append(j)
+    ax.scatter(db_indices, q_indices, s=1, c="r")
 
     ax.invert_yaxis()
     ax.xaxis.tick_top()
@@ -85,7 +91,8 @@ def main():
                              "same group.")
     parser.add_argument("N", type=int, default=2,
                         help="The number of hits to consider a group viable.")
-    parser.add_argument("--display", "-d", action="store_true")
+    parser.add_argument("--display", "-d", action="store_true",
+                        help="Displays the hit groups that are found in red and the original hits in blue.")
     args = parser.parse_args(sys.argv[1:])
 
     hits = []

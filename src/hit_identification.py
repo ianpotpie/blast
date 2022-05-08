@@ -43,7 +43,7 @@ def display_hits(hits):
 
     db_indices = [i for i, _, _ in hits]
     q_indices = [j for _, j, _ in hits]
-    ax.scatter(db_indices, q_indices, s=1)
+    ax.scatter(db_indices, q_indices, s=1, c="b")
     ax.invert_yaxis()
     ax.xaxis.tick_top()
     ax.xaxis.set_label_position("top")

@@ -1,7 +1,6 @@
 import sys
 import argparse
 import matplotlib.pyplot as plt
-from matplotlib.collections import LineCollection
 from knuth_morris_pratt import kmp_search
 
 
@@ -30,50 +29,21 @@ def find_hits(db_seq, seeds):
     return hits
 
 
-def extract_seeds(seeds_file):
-    """
-    Takes a file containing a list of seeds and converts the data in the file to a list of seeds (index, kmer tuples).
-    In the file, lines containing comments will begin with the "#" symbol.
-    Each line will contain at most one seed, which will have the index and kmer of the seed separated by whitespace.
-
-    :param seeds_file:
-    :return:
-    """
-    seeds = []
-    with open(seeds_file) as f:
-        for line in f:
-            if line[0] != "#":
-                index, kmer = line.split()
-                seeds.append((int(index), kmer))
-    return seeds
-
-
-def display_hits(hits, db_seq=None, q_seq=None):
+def display_hits(hits):
     """
     Displays a dot-plot of the hits resulting from an alignment using matplotlib.
 
     :param hits: a sequence of hits to be plotted (db_index, query_index, length)
-    :param db_seq: the database sequence from which the hits were taken
-    :param q_seq: the query sequence from which the hits were taken
-    :return:
+    :return: None
     """
     fig, ax = plt.subplots()
-    fig.suptitle("BLAST Hit Identification\n")
-    ax.set_xlabel("Database Sequence")
-    ax.set_ylabel("Query Sequence")
-    alignments = [[(i, j), (i + k - 1, j + k - 1)] for i, j, k in hits]
-    lc = LineCollection(alignments, linewidths=1, zorder=0)
-    ax.add_collection(lc)
+    fig.suptitle("Hit Identification", y=0.06)
+    ax.set_xlabel("Database")
+    ax.set_ylabel("Query")
+
     db_indices = [i for i, _, _ in hits]
     q_indices = [j for _, j, _ in hits]
-    ax.scatter(db_indices, q_indices, s=10, c="black", zorder=1)
-    if db_seq is not None:
-        ax.set_xticks([i for i in range(len(db_seq))])
-        ax.set_xticklabels([s for s in db_seq])
-    if q_seq is not None:
-        ax.set_yticks([j for j in range(len(q_seq))])
-        ax.set_yticklabels([s for s in q_seq])
-    ax.tick_params(labelsize=4)
+    ax.scatter(db_indices, q_indices, s=1)
     ax.invert_yaxis()
     ax.xaxis.tick_top()
     ax.xaxis.set_label_position("top")
@@ -86,26 +56,37 @@ def main():
                   "is present, then a plot of the alignment will be shown. The original query sequence can be " \
                   "provided as well to improve the plot."
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("database_sequence", type=str)
-    parser.add_argument("seeds_file", type=str)
-    parser.add_argument("--query-sequence", "-q", type=str)
-    parser.add_argument("--display", "-d", type=bool, action="store_true")
+    parser.add_argument("database_file", type=str,
+                        help="This file contains the database sequence in which we are looking for hits."
+                             "Characters on multiple lines are concatenated together (interpreted as one sequence).")
+    parser.add_argument("seeds_file", type=str,
+                        help="This file contains the seeds for the hits.")
+    parser.add_argument("--display", "-d", action="store_true",
+                        help="If this tag is included, the hits will be displayed in a matlab plot.")
     args = parser.parse_args(sys.argv[1:])
 
-    seeds = extract_seeds(args.seeds_file)
+    db_seq = ""
+    with open(args.database_file) as f:
+        for line in f:
+            db_seq += line.strip()
 
-    hits = find_hits(args.database_sequence, seeds)
+    seeds = []
+    with open(args.seeds_file) as f:
+        for line in f:
+            if line[0] != "#":
+                index, kmer = line.split()
+                seeds.append((int(index), kmer))
 
-    print(f"# Database Sequence: {args.database_sequence}")
-    if args.query_sequence is not None:
-        print(f"# Query Sequence: {args.query_sequence}")
+    hits = find_hits(db_seq, seeds)
+
+    print(f"# Database Sequence: {db_seq}")
     print(f"# Seeds: {seeds}")
     print(f"# Hits:")
     for db_index, q_index, k in hits:
         print(f"{db_index} {q_index} {k}")
 
     if args.display:
-        display_hits(hits, args.database_sequence, args.query_sequence)
+        display_hits(hits)
 
 
 if __name__ == "__main__":

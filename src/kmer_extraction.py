@@ -6,8 +6,8 @@ DNA_SYMBOLS = ["A", "C", "G", "T"]
 RNA_SYMBOLS = ["A", "C", "G", "T", "U"]
 PROTEIN_SYMBOLS = ["A", "G", "I", "L", "P", "V", "F", "W", "Y", "D",
                    "E", "R", "H", "K", "S", "T", "C", "M", "N", "Q"]
-ALPHABET = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U",
-            "V", "W", "X", "Y", "Z"]
+ALPHA_SYMBOLS = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M",
+                 "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"]
 
 
 def get_kmers(seq, k):
@@ -19,7 +19,7 @@ def get_kmers(seq, k):
     :return: a list of seeds, (kmer,index) tuples
     """
     kmers = []
-    for i in range((len(seq) + 1) - k):
+    for i in range(1 + len(seq) - k):
         kmer = seq[i:i + k]
         kmers.append((i, kmer))
     return kmers
@@ -39,15 +39,17 @@ def build_neighborhood(seq, symbols, scoring_scheme, T):
     prefixes = [("", 0.0)]
     for i in range(len(seq)):
         suffix = seq[i + 1:]
-        best_suffix_score = scoring_scheme(suffix, suffix)
+        best_suffix_score = scoring_scheme(suffix, suffix)  # assumes a matching suffix is highest-scoring
         next_prefixes = []
         for prefix, prefix_score in prefixes:
             for symbol in symbols:
                 symbol_score = scoring_scheme(seq[i], symbol)
-                if prefix_score + symbol_score + best_suffix_score > T:  # this prevents extending unusable prefixes
+                # if prefix_score + symbol_score + best_suffix_score <= T, then there is no possible suffix we could
+                # append to the prefix to create a kmer that surpasses the threshold score
+                if prefix_score + symbol_score + best_suffix_score > T:
                     next_prefixes.append((prefix + symbol, prefix_score + symbol_score))
         prefixes = next_prefixes
-    return [kmer for kmer, score in prefixes]
+    return [seq for seq, score in prefixes]
 
 
 def get_neighborhoods(seq, symbols, k, scoring_scheme, T):
@@ -63,7 +65,7 @@ def get_neighborhoods(seq, symbols, k, scoring_scheme, T):
     :return: a list of seeds, (index, kmer) tuples
     """
     kmer_to_indices = {}  # prevents the need for checking a kmer multiple times
-    for i in range((len(seq) + 1) - k):
+    for i in range(1 + len(seq) - k):
         kmer = seq[i: i + k]
         if kmer not in kmer_to_indices:
             kmer_to_indices[kmer] = []
@@ -98,38 +100,41 @@ def main():
                         help="The score of a mismatch within an alignment (used if matrix is not provided).")
     parser.add_argument("--matrix", "-s", type=str,
                         help="The file containing a scoring matrix used to score alignments.")
-    parser.add_argument("--type", type=str, choices=["DNA", "RNA", "PROTEIN", "ALPHABET"], default="DNA",
+    parser.add_argument("--alphabet", "-a", type=str, choices=["DNA", "RNA", "PROTEIN", "ALPHA"],
                         help="The type of sequence from which we are extracting kmers (used to determine the possible"
                              "replacement symbols available).")
     args = parser.parse_args(sys.argv[1:])
 
+    # build the source sequence
+    sequence = ""
     with open(args.sequence, mode="r") as f:
-        sequence = ""
         for line in f:
             sequence += line.strip()
 
-    if args.type == "RNA":
-        symbols = RNA_SYMBOLS
-    elif args.type == "PROTEIN":
-        symbols = PROTEIN_SYMBOLS
-    elif args.type == "ALPHABET":
-        symbols = ALPHABET
-    else:
-        symbols = DNA_SYMBOLS
-
+    # if we are not using a threshold, then the case becomes much simpler, otherwise we need to
     if args.threshold is None:
         kmers = get_kmers(sequence, args.k)
     else:
+        if args.alphabet == "DNA":
+            symbols = DNA_SYMBOLS
+        elif args.alphabet == "RNA":
+            symbols = RNA_SYMBOLS
+        elif args.alphabet == "PROTEIN":
+            symbols = PROTEIN_SYMBOLS
+        else:
+            symbols = ALPHA_SYMBOLS
+
         scoring_scheme = ScoringScheme(match=args.match, mismatch=args.mismatch)
         if args.matrix:
             scoring_scheme.load_matrix(args.matrix)
+
         kmers = get_neighborhoods(sequence, symbols, args.k, scoring_scheme, args.threshold)
 
     print(f"# Sequence: {sequence}")
     print(f"# Length (k): {args.k}")
     if args.threshold is not None:
         print(f"# Threshold (T): {args.threshold}")
-    print(f"# {len(kmers)} Kmers:")
+    print(f"# {len(kmers)} Seeds:")
     for index, kmer in kmers:
         print(f"{index} {kmer}")
 

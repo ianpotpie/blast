@@ -64,7 +64,7 @@ def get_neighborhoods(seq, symbols, k, scoring_scheme, T):
     :param T: the threshold score for seeds
     :return: a list of seeds, (index, kmer) tuples
     """
-    kmer_to_indices = {}  # prevents the need for checking a kmer multiple times
+    kmer_to_indices = {}  # prevents the need for finding the neighborhood of a kmer multiple times
     for i in range(1 + len(seq) - k):
         kmer = seq[i: i + k]
         if kmer not in kmer_to_indices:
@@ -105,29 +105,29 @@ def main():
                              "replacement symbols available).")
     args = parser.parse_args(sys.argv[1:])
 
+    # set the symbols from which we will draw
+    if args.alphabet == "DNA":
+        symbols = DNA_SYMBOLS
+    elif args.alphabet == "RNA":
+        symbols = RNA_SYMBOLS
+    elif args.alphabet == "PROTEIN":
+        symbols = PROTEIN_SYMBOLS
+    else:
+        symbols = ALPHA_SYMBOLS
+
     # build the source sequence
     sequence = ""
     with open(args.sequence, mode="r") as f:
         for line in f:
             sequence += line.strip()
 
-    # if we are not using a threshold, then the case becomes much simpler, otherwise we need to
+    # if we are not using a threshold, then the case becomes much simpler, otherwise we need to use prefix pruning
     if args.threshold is None:
         kmers = get_kmers(sequence, args.k)
     else:
-        if args.alphabet == "DNA":
-            symbols = DNA_SYMBOLS
-        elif args.alphabet == "RNA":
-            symbols = RNA_SYMBOLS
-        elif args.alphabet == "PROTEIN":
-            symbols = PROTEIN_SYMBOLS
-        else:
-            symbols = ALPHA_SYMBOLS
-
-        scoring_scheme = ScoringScheme(match=args.match, mismatch=args.mismatch)
+        scoring_scheme = ScoringScheme(match_score=args.match, mismatch_score=args.mismatch)
         if args.matrix:
             scoring_scheme.load_matrix(args.matrix)
-
         kmers = get_neighborhoods(sequence, symbols, args.k, scoring_scheme, args.threshold)
 
     print(f"# Sequence: {sequence}")

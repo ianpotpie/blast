@@ -59,8 +59,8 @@ def display_hit_groups(hit_groups, original_hits=None):
     ax.set_ylabel("Query")
 
     if original_hits is not None:
-        db_indices = [i for i, _, _ in original_hits]
-        q_indices = [j for _, j, _ in original_hits]
+        db_indices = [i + (k / 2) for i, _, k in original_hits]
+        q_indices = [j + (k / 2) for _, j, k in original_hits]
         ax.scatter(db_indices, q_indices, s=1, c="b")
 
     grouped_hits = set()
@@ -70,8 +70,8 @@ def display_hit_groups(hit_groups, original_hits=None):
     db_indices = []
     q_indices = []
     for i, j, k in grouped_hits:
-        db_indices.append(i)
-        q_indices.append(j)
+        db_indices.append(i + (k / 2))
+        q_indices.append(j + (k / 2))
     ax.scatter(db_indices, q_indices, s=1, c="r")
 
     ax.invert_yaxis()
@@ -84,13 +84,11 @@ def main():
     description = "Finds all groups of N non-overlapping hits whose pairwise distances are less than A." \
                   "If an N is not provided then the default value is 2 (it looks for pairs)"
     parser = argparse.ArgumentParser(description=description)
-    parser.add_argument("hits_file", type=str,
-                        help="The file containing the hits in which we will find groups.")
+    parser.add_argument("hits_file", type=str, help="The file containing the hits in which we will find groups.")
     parser.add_argument("A", type=int,
                         help="The maximum possible distance between non-overlapping hits to consider them part of the"
                              "same group.")
-    parser.add_argument("N", type=int, default=2,
-                        help="The number of hits to consider a group viable.")
+    parser.add_argument("N", type=int, default=2, help="The number of hits to consider a group viable.")
     parser.add_argument("--display", "-d", action="store_true",
                         help="Displays the hit groups that are found in red and the original hits in blue.")
     args = parser.parse_args(sys.argv[1:])

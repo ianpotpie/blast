@@ -101,12 +101,12 @@ def main():
                 hits.append((int(i), int(j), int(k)))
 
     hit_groups = group_hits(hits, args.A, args.N)
-
+    print(f"# Hits: {hits}")
     print(f"# Distance Limit (A): {args.A}")
     print(f"# Group Size (N): {args.N}")
     print(f"# {len(hit_groups)} Hit Groups:")
     for hit_group in hit_groups:
-        hit_group = [f"{i} {j} {k} " for i, j, k in hit_group]
+        hit_group = [f"{i} {j} {k}" for i, j, k in hit_group]
         print(",".join(hit_group))
 
     if args.display:

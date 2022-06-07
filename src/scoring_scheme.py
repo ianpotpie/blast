@@ -2,139 +2,130 @@ import numpy as np
 
 
 class ScoringScheme:
-    """
-    This class contains the template for a symbol and alignment scoring scheme
-    (note that the "-" symbol is reserved for gaps).
-    If the scoring scheme does not recognize a symbol, or if a scoring matrix has not been specified, then the scheme
-    will use the default match/mismatch/gap scores respectively.
-    A scoring matrix can be automatically loaded from a file.
-    """
-
-    def __init__(self, match_score: float = 1.0, mismatch_score: float = -1.0, gap_score: float = -1.0) -> None:
+    def __init__(self, match=1.0, mismatch=-1.0, gap_extend=-1.0, gap_open=0.0, semi_global=False):
+        self.match = match
+        self.mismatch = mismatch
+        self.gap_extend = gap_extend
+        self.gap_open = gap_open
+        self.semi_global = semi_global
         self.symbol_to_index = None
         self.scoring_matrix = None
-        self.match_score = match_score
-        self.mismatch_score = mismatch_score
-        self.gap_score = gap_score
 
-    def get_symbols(self) -> list[str]:
+    def get_symbols(self):
         """
-        Creates a list of all the symbols (excluding gaps) that are in the scoring matrix.
-        The list is ordered based on the order that the symbols appear in the scoring matrix.
+        Creates a list of all symbols in the scoring matrix in the order in which they appear.
+        Returns none if no scoring matrix has been loaded.
 
         :return: a list of symbols
         """
-        symbols = ["" for _ in range(len(self.symbol_to_index))]
-        for symbol, i in self.symbol_to_index.items():
-            symbols[i] = symbol
-        return symbols
+        if self.scoring_matrix is None:
+            return None
+        else:
+            symbols = np.empty(len(self.symbol_to_index), dtype=str)
+            for symbol, index in self.symbol_to_index.items():
+                symbols[index] = symbol
+            return list(symbols)
 
-    def score_symbols(self, x: str, y: str) -> float:
+    def score(self, alignment1: str, alignment2: str):
         """
-        Scores the alignment of two symbols. "-" is reserved for gaps.
+        Scores the alignment of two sequences based on their symbol-by-symbol scores going left-to-right.
+        The method expects alignments to be the same length.
+        It will quietly stop evaluating the score at the end of the shorter alignment.
 
-        :param x: the first symbol
-        :param y: the second symbol
+        :param alignment1: the first sequence in the alignment to score
+        :param alignment2: the second sequence in the alignment to score
         :return: the score of the alignment
         """
-        if (x == "-") and (y == "-"):
-            return 0.0
+        if self.semi_global:
+            alignment1, alignment2 = alignment1.lstrip("-"), alignment2.lstrip("-")  # disregard gaps at the beginning
+            alignment1, alignment2 = alignment1[-min(len(alignment1), len(alignment2)):], \
+                                     alignment2[-min(len(alignment1), len(alignment2)):]
+            alignment1, alignment2 = alignment1.rstrip("-"), alignment2.rstrip("-")  # disregard gaps at the end
+            alignment1, alignment2 = alignment1[:min(len(alignment1), len(alignment2))], \
+                                     alignment2[:min(len(alignment1), len(alignment2))]
 
-        if (x == "-") or (y == "-"):
-            return self.gap_score
-
-        if (self.symbol_to_index is not None) and (x in self.symbol_to_index) and (y in self.symbol_to_index):
-            r = self.symbol_to_index[x]
-            c = self.symbol_to_index[y]
-            return self.scoring_matrix[r][c]
-
-        return self.match_score if x == y else self.mismatch_score
-
-    def score_alignment(self, x: str, y: str) -> float:
-        """
-        Scores the alignment of two sequences based on their symbol-by-symbol scores
-        (does not change based off the ordering of the symbols alignments).
-        If x and y do not have the same length, then the score will treat the missing symbols as gaps.
-
-        :param x: the first alignment sequence
-        :param y: the second alignment sequence
-        :return: the score the alignment of the two sequences
-        """
         score = 0.0
-        for i in range(min(len(x), len(y))):
-            score += self.score_symbols(x[i], y[i])
-        score += abs(len(x) - len(y)) * self.gap_score
+        for i, (symbol1, symbol2) in enumerate(zip(alignment1, alignment2)):
+
+            if symbol1 == "-" and symbol2 == "-":
+                raise ValueError("Encountered alignment between two gaps")
+
+            elif symbol1 == "-":
+                score += self.gap_extend
+                score += self.gap_open if (i > 0) and alignment1[i - 1] != "-" else 0.0
+
+            elif symbol2 == "-":
+                score += self.gap_extend
+                score += self.gap_open if (i > 0) and alignment2[i - 1] != "-" else 0.0
+
+            elif self.scoring_matrix is not None:
+                if (symbol1 not in self.symbol_to_index) or (symbol2 not in self.symbol_to_index):
+                    raise ValueError("Encountered a symbol not in the scoring matrix")
+                row = self.symbol_to_index[symbol1]
+                col = self.symbol_to_index[symbol2]
+                score += self.scoring_matrix[row][col]
+            else:
+                score += self.match if symbol1 == symbol2 else self.mismatch
+
         return score
 
-    def load_matrix(self, filename: str) -> None:
+    def __call__(self, alignment1, alignment2):
+        """
+        Calling the scoring scheme will score the two sequences passed in.
+        You can find the behavior of the scoring in the "score" method.
+
+        :param alignment1: the first sequence in the alignment to score
+        :param alignment2: the second sequence in the alignment to score
+        :return: the score of the alignment
+        """
+        return self.score(alignment1, alignment2)
+
+    def load_matrix(self, filename):
         """
         Sets the scoring matrix of the scoring system based on the scoring matrix of a file.
-        Files should be of the form:\n
-        X A B C\n
-        A 1 2 3\n
-        B 4 5 6\n
-        C 7 8 9\n
 
         :param filename: the file containing the new matrix
         :return: None
         """
-        with open(filename, mode="r") as f:
-            file_matrix = [line.strip().split() for line in f.readlines()]
+        with open(filename, mode='r') as f:
+            headline = f.readline()
+            while headline[0] == "#":  # iterates past all lines with comments
+                headline = f.readline()
+            self.symbol_to_index = {symbol.strip(): i for i, symbol in enumerate(headline.split())}
 
-            # takes the symbols from the first row
-            self.symbol_to_index = {s: i for i, s in enumerate(file_matrix[0][1:])}
-
-            # takes the score values from the interior of the matrix
+            # fill the scoring matrix
             n_symbols = len(self.symbol_to_index)
-            self.scoring_matrix = np.array((n_symbols, n_symbols))
-            for r in range(n_symbols):
-                for c in range(n_symbols):
-                    self.scoring_matrix[r][c] = float(file_matrix[r + 1][c + 1])
+            self.scoring_matrix = np.zeros((n_symbols, n_symbols))
+            for line in f:
+                row = line.split()
+                symbol = row.pop(0)
+                i = self.symbol_to_index[symbol]
+                for j, score in enumerate(row):
+                    self.scoring_matrix[i, j] = float(score)
 
-    def get_lambda(self, prior, precision=0.001) -> float:
+    def __str__(self):
         """
-        Calculates the value of the normalizing lambda value that is the unique solution to
+        Creates a string representation of the scoring scheme.
+        If a scoring matrix is loaded, then it uses a standard PAM or BLOSUM style matrix.
 
-        sum_ij(p_i * p_j * exp(s_ij * lambda))
-
-        :param prior: the underlying distribution of the symbols
-        :param precision: the precision of the lambda value
-        :return: value of lambda for the scoring matrix
+        :return: a string of the scoring scheme
         """
-        prior = np.reshape(np.array(prior), (1, -1))
-        min_bound = 0.0
+        if self.scoring_matrix is None:
+            s = f"Match Score: {self.match}\n" + \
+                f"Mismatch Penalty: {self.mismatch}\n" + \
+                f"Gap Open Penalty: {self.gap_open}\n" + \
+                f"Gap Extension Penalty: {self.gap_extend}"
+        else:
+            s = f"# Gap Open Penalty: {self.gap_open}\n" + \
+                f"# Gap Extension Penalty: {self.gap_extend}\n"
 
-        max_bound = 1.0
-        found_max = False
-        while not found_max:
-            total = prior.T @ np.exp(self.scoring_matrix * max_bound) @ prior
-            if total > 1:
-                found_max = True
-            else:
-                found_max *= 2
+            symbols = self.get_symbols()
+            s += "   " + "  ".join(symbols)
+            for i in range(self.scoring_matrix.shape[0]):
+                s += "\n" + symbols[i]
+                for j in range(self.scoring_matrix.shape[1]):
+                    score = self.scoring_matrix[i, j]
+                    score = int(score) if score.is_integer() else score
+                    s += f" {score}" if score < 0.0 else f"  {score}"
 
-        while max_bound - min_bound >= precision:
-            mid = (max_bound - min_bound) / 2
-            total = prior.T @ np.exp(self.scoring_matrix * mid) @ prior
-            if total > 1.0:
-                max_bound = mid
-            if total < 1.0:
-                min_bound = mid
-
-        return (max_bound - min_bound) / 2
-
-    def get_transition_matrix(self, lamb: float, prior: np.ndarray) -> np.ndarray:
-        """
-        Get the transition probability matrix using the provided lambda
-
-        :param lamb: the lambda value use to calculate probability values
-        :param prior: and ndarray
-        :return: the transition probability matrix`
-        """
-        prior = np.array(prior)
-        probs = np.exp(np.copy(self.scoring_matrix) * lamb)
-        probs = probs.T * prior
-        probs = probs.T * prior
-        for i in range(probs.shape[0]):
-            probs[i] /= sum(probs[i])  # normalizes so that all rows sum to 1
-        return probs
+        return s

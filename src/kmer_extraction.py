@@ -125,7 +125,7 @@ def main():
     if args.threshold is None:
         kmers = get_kmers(sequence, args.k)
     else:
-        scoring_scheme = ScoringScheme(match_score=args.match, mismatch_score=args.mismatch)
+        scoring_scheme = ScoringScheme(match=args.match, mismatch=args.mismatch)
         if args.matrix:
             scoring_scheme.load_matrix(args.matrix)
         kmers = get_neighborhoods(sequence, symbols, args.k, scoring_scheme, args.threshold)
